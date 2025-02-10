@@ -1,0 +1,649 @@
+{
+  "name": "Report Generation and Nested scrapping",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "83c4a37d-7712-48b2-b2bd-bcf14e545a91",
+      "name": "When clicking \"Test workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "2cec46d7-7d6b-44b3-b97a-0e82c79ad625",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -240,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "hrefs",
+              "cssSelector": "a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "879452c9-b3cc-440b-8ef9-9fa0face4fd4",
+      "name": "HTML",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.1,
+      "position": [
+        -120,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the input data\nconst inputData = $json.hrefs;\n\n// Check if the input data is an array and not empty\nif (Array.isArray(inputData) && inputData.length > 0) {\n    // Initialize a Set to store unique cleaned URLs\n    let uniqueUrls = new Set();\n\n    // Initialize an array to store cleaned data\n    let cleanedDataArray = [];\n\n    // Iterate over each section\n    for (const section of inputData) {\n        // Check if the section contains text data, does not have spaces, and is not empty\n        if (typeof section === 'string' && section.trim() !== '') {\n            // Replace spaces with dashes and convert to lowercase\n            const cleanedSection = section.trim().toLowerCase().replace(/\\s+/g, '-');\n            // Check if the cleaned URL is not already present in the Set\n            if (!uniqueUrls.has(cleanedSection)) {\n                // Add the cleaned URL to the Set\n                uniqueUrls.add(cleanedSection);\n                // Push the cleaned section to the cleanedDataArray\n                cleanedDataArray.push(cleanedSection);\n            }\n        }\n    }\n\n    // Return the cleaned data array\n    return { cleanedDataArray };\n} else {\n    // If input data is not an array or empty, return an empty object\n    return {};\n}\n"
+      },
+      "id": "626b0b95-19e7-4dfa-8d51-459035ef93fc",
+      "name": "Code6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "hrefs",
+              "type": "arrayValue",
+              "arrayValue": "={{ $json.hrefs }}"
+            },
+            {
+              "name": "url",
+              "stringValue": "={{ $('Edit Fields').item.json.url }}"
+            }
+          ]
+        },
+        "include": "selected",
+        "options": {}
+      },
+      "id": "cf20bbb0-94fa-4f62-a3bf-687c1b77c508",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        20,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "chrefs",
+              "type": "arrayValue",
+              "arrayValue": "={{ $json.cleanedDataArray }}"
+            },
+            {
+              "name": "url",
+              "stringValue": "={{ $('Edit Fields3').item.json.url }}"
+            }
+          ]
+        },
+        "include": "selected",
+        "options": {}
+      },
+      "id": "935b9cb1-5a71-4f01-baef-bc43d5a025e6",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        300,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputArray = $json.chrefs; // Assuming 'inputArray' is the property name containing the array of names\nconst baseURL = $json.url;\n// Accessing the chatInput property from the first item in the array\n\n// Initialize an array to store the output objects\nlet outputArray = [];\n\n// Check if the input data is an array and not empty\nif (Array.isArray(inputArray) && inputArray.length > 0 && baseURL) {\n    // Iterate over each element in the input array\n    for (const name of inputArray) {\n        // Construct the absolute URL\n        let absoluteURL = name;\n        \n        // Check if the URL is already absolute\n        if (!name.startsWith(\"http\")) {\n            absoluteURL = baseURL + (name.startsWith(\"/\") ? name : \"/\" + name); // Construct absolute URL\n        }\n\n        // Push an object containing the absolute URL to the output array\n        outputArray.push({ json: { url: absoluteURL } });\n    }\n}\n\nreturn outputArray;"
+      },
+      "id": "a4936a7b-4c2b-4b9a-b925-eb94f5e79cb8",
+      "name": "Code7",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "url",
+              "stringValue": "https://aeriestechnology.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b6b2f166-f730-4ff4-ba04-325e5527459a",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        0,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputArray = items.map(item => item.json.url);\n\n// Remove duplicates from the input array\nconst uniqueURLs = [...new Set(inputArray)];\n\n// Create an array of objects with unique URLs\nconst outputArray = uniqueURLs.map(url => ({ json: { url } }));\n\n// Return the array of unique URLs\nreturn outputArray;"
+      },
+      "id": "dd7078bf-3d7c-41eb-850d-bc8f6a8d3390",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const urlsArray = items.map(item => item.json.url);\n\n// Define category keywords\nconst servicesKeywords = ['services', 'solutions', 'analytics', 'infrastructure', 'managed services','careers'];\nconst contactKeywords = ['contact','facebook','news', 'get in touch', 'reach us', 'support','twitter','linkedin','youtube'];\nconst aboutKeywords = ['about', 'who we are', 'our story', 'mission', 'vision'];\n\n// Check if urlsArray is defined and not empty\nif (!urlsArray || urlsArray.length === 0) {\n    throw new Error('Input URLs array is empty or undefined.');\n}\n\n// Function to categorize URLs based on keywords\nconst categorizeUrls = (url) => {\n    if (servicesKeywords.some(keyword => url.toLowerCase().includes(keyword))) {\n        return 'services';\n    }\n    if (contactKeywords.some(keyword => url.toLowerCase().includes(keyword))) {\n        return 'contact';\n    }\n    if (aboutKeywords.some(keyword => url.toLowerCase().includes(keyword))) {\n        return 'about';\n    }\n    return 'about'; // Fallback to 'about' category if no other category matches\n};\n\n// Categorize URLs\nconst categorizedUrls = {\n    services: [],\n    contact: [],\n    about: []\n};\n\nurlsArray.forEach(url => {\n    const category = categorizeUrls(url);\n    categorizedUrls[category].push(url);\n});\n\n// Sort URLs within each category\nObject.keys(categorizedUrls).forEach(category => {\n    categorizedUrls[category].sort();\n});\n\nreturn categorizedUrls;"
+      },
+      "id": "1735f250-f466-4fd6-a144-083505ccf262",
+      "name": "Code4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputArray = $json.services; // Assuming $json contains the input array\n\n\nconst outputArray = inputArray.map(url => ({ url }));\n\nreturn outputArray;\n"
+      },
+      "id": "a20ccede-b21f-43c8-ba9a-10f271ceb028",
+      "name": "Code1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "87c0b159-0f80-497c-a40c-c6b235530b28",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        620,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "fd0f6d52-1708-4280-91cd-b3c6fbfa40a3",
+      "name": "HTTP Request3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1020,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": "body,section"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7c1b1bbc-2e8b-4ff0-8776-46a464865b9f",
+      "name": "HTML1",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst htmlContent = $json.body;\n\nconst htmlTagRegex = /<[^>]*>/g;\n\n\nconst cleanedContent = htmlContent.replace(htmlTagRegex, '');\n\n\nconst finalContent = cleanedContent.replace(/\\s+/g, ' ').trim();\n\nreturn [{ cleanedContent: finalContent }];\n"
+      },
+      "id": "eb367707-fa98-4f40-92de-b023ca18ddec",
+      "name": "Code3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "model": "mistral:latest",
+        "options": {}
+      },
+      "id": "d9151d22-503e-42cd-8b02-54f203995a18",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1620,
+        620
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "u6FLNIa9pUbTy6xL",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "PageSum",
+              "stringValue": "={{ $json.response.text }}"
+            },
+            {
+              "name": "PageURL",
+              "stringValue": "={{ $('Edit Fields2').item.json.url }}"
+            }
+          ]
+        },
+        "include": "selected",
+        "options": {}
+      },
+      "id": "6ac75b01-ad9c-4c11-9473-2209591560d1",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        1720,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "url",
+              "stringValue": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "971fbfa7-2105-4b40-9a9f-b8207eb8771d",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        840,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "cleanedContent",
+              "stringValue": "={{ $json.cleanedContent }}"
+            }
+          ]
+        },
+        "include": "selected",
+        "includeFields": "cleanedContent",
+        "options": {}
+      },
+      "id": "a20399d1-18a5-451f-a68b-f61cf1b205fd",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        1340,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "38e5a656-0017-4ce9-a420-7a232591d7fc",
+      "name": "Edit Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        780,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "164b47cc-c023-4440-ba34-8ce93fe0d116",
+      "name": "Convert to File1",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 2000,
+        "options": {}
+      },
+      "id": "0edca9ae-52c8-4ab2-8fd0-b825a29f1aab",
+      "name": "Summarization Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Test workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bf88fbbd-b703-4c91-a55b-0834ff74f88b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3f2bfeeb9154875b428bba7f0ed8dd8436767c35b90ad3df1c32cfd130cb2ac9"
+  },
+  "id": "7mkAXXIuQ8nfIuSn",
+  "tags": []
+}

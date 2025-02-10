@@ -1,0 +1,243 @@
+{
+  "name": "Automated Email Content For lead Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "emailText",
+              "stringValue": "={{ $json.content }}"
+            },
+            {
+              "name": "subject",
+              "stringValue": "={{ $json.subject }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cbed65d8-ab09-4c12-a3a2-ed5a8301c26d",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        520,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "email",
+              "stringValue": "={{ $json.body.ticketId }}"
+            },
+            {
+              "name": "emailid",
+              "stringValue": "={{ $json.body.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "35718d68-e650-423f-b823-c75ce71532b6",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        -180,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "62995aa6-471a-4fde-ba4c-55514648f5d9",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "35ca8b44-5b37-4f9f-b941-0b5665cc0901",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -260,
+        500
+      ],
+      "webhookId": "62995aa6-471a-4fde-ba4c-55514648f5d9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://buildergptcanvas.aeriestechnology.com/api/v1/prediction/4d2356be-cb10-4184-817e-c3a68f89af78",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "question",
+              "value": "={{ $json.body.description }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "2b0cd8ff-93b7-4a44-81ef-29f0f4eae475",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input text containing subject and content\nconst inputText = $json.text; // Assuming `text` contains the email body\n\n// Extracting subject and content\nlet subject = \"\";\nlet content = \"\";\n\n// Find the index of the first occurrence of \"\\n\\n\" to separate subject and content\nconst separatorIndex = inputText.indexOf(\"\\n\\n\");\n\n// Check if the separator exists\nif (separatorIndex !== -1) {\n    // Extract subject and content based on the separator\n    subject = inputText.substring(0, separatorIndex).replace(\"Subject:\", \"\").trim();\n    content = inputText.substring(separatorIndex + 2).trim();  // Keeping \\n in content\n} else {\n    // If separator not found, treat the entire text as content\n    subject = \"No subject found\";\n    content = inputText.trim();  // Keeping \\n in content\n}\n\n// Output subject and content\nreturn {\n    subject: subject,\n    content: content\n};\n"
+      },
+      "id": "13e58c08-c3d6-4c18-9c4e-93c6318d84cb",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Triumph! Email Dispatched\n\n\n\n\n\n",
+        "options": {}
+      },
+      "id": "9ada9a4c-c22e-41fd-8e54-aa68b79d94c4",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "innovation.aeries@gmail.com",
+        "toEmail": "={{ $('Edit Fields1').item.json.emailid }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailText }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7af8178d-9860-4f6d-a1ae-94139cacdba5",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        220
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "DJgNlO1ivk6y62u8",
+          "name": "SMTP account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2a978321-3e2a-4d72-9dcd-a366b72dc5d6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3f2bfeeb9154875b428bba7f0ed8dd8436767c35b90ad3df1c32cfd130cb2ac9"
+  },
+  "id": "dSd37ArOcHIkJmzZ",
+  "tags": []
+}
